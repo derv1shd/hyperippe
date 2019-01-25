@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Hyperippe.GraphModel
+namespace Hyperippe.Workers
 {
-    public class TransientLink : Link
+    public class Pruner
     {
-        public TransientLink(Uri uri) : base(uri)
+        public Pruner()
         {
             throw new NotImplementedException();
         }

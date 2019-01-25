@@ -8,6 +8,7 @@ namespace Hyperippe.GraphModel
     {
         public PermanentLink(Uri uri) : base(uri)
         {
+            throw new NotImplementedException();
         }
     }
 }
