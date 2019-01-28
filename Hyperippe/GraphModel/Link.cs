@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Hyperippe.GraphModel
 {
-    public abstract class Link
+    public class Link
     {
         public Uri Uri;
 
@@ -14,7 +14,5 @@ namespace Hyperippe.GraphModel
         }
 
         public string Key { get { return Uri.ToString(); } }
-        public bool PursuePath { get; }
-        public virtual string Kind { get; }
     }
 }
