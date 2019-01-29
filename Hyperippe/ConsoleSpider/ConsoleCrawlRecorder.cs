@@ -6,29 +6,29 @@ using Hyperippe.Workers;
 
 namespace Hyperippe.ConsoleSpider
 {
-    class ConsoleCrawlListener : Hyperippe.Workers.ICrawlListener
+    class ConsoleCrawlRecorder : Hyperippe.Workers.ICrawlRecorder
     {
-        void ICrawlListener.ChangeDetected(NodeContent oldNodeContent, string newContent)
+        void ICrawlRecorder.ChangeDetected(NodeContent oldNodeContent, string newContent)
         {
             Console.WriteLine("Change detected on " + oldNodeContent.Node.Name + ", old length: " + oldNodeContent.Content.Length.ToString() + ", new length: " + newContent.Length.ToString());
         }
 
-        void ICrawlListener.ExceptionRaised(object caller, Exception ex)
+        void ICrawlRecorder.ExceptionRaised(object caller, Exception ex)
         {
             Console.WriteLine("Exception thrown on " + caller.ToString() + ", exception: " + ex.Message);
         }
 
-        void ICrawlListener.LinkChangeDetected(NodeContent oldNodeContent, List<Link> newLinks)
+        void ICrawlRecorder.LinkChangeDetected(NodeContent oldNodeContent, List<Link> newLinks)
         {
             Console.WriteLine("Link change detected on " + oldNodeContent.Node.Name + ", previous link number: " + oldNodeContent.Node.Links.Count.ToString() + ", link number: " + newLinks.Count.ToString());
         }
 
-        void ICrawlListener.LogMessage(string text)
+        void ICrawlRecorder.LogMessage(string text)
         {
             Console.WriteLine(text);
         }
 
-        void ICrawlListener.NodeCreated(NodeContent nodeContent)
+        void ICrawlRecorder.NodeCreated(NodeContent nodeContent)
         {
             Console.WriteLine("Created node for " + nodeContent.Node.Name + " URL: " + nodeContent.Node.Uri.ToString() + ", link(s): " + nodeContent.Node.Links.Count.ToString());
         }

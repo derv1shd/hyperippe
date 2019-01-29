@@ -8,15 +8,42 @@ namespace Hyperippe.Workers
 {
     public class Pruner
     {
-        private ICrawlListener myCrawlListener;
+        private ICrawlRecorder myCrawlListener;
+        private List<Uri> myTargets;
         private Regex anchors;
         private Regex hrefs;
 
-        public Pruner(ICrawlListener crawlListener)
+        public Pruner(List<Uri> targets, ICrawlRecorder recorder)
         {
             anchors = new Regex("(?i)<a([^>]+)>(.+?)</a>");
             hrefs = new Regex("\\s*(?i)href\\s*=\\s*(\"([^\"]*\")|'[^']*'|([^'\">\\s]+))");
-            myCrawlListener = crawlListener;
+            myCrawlListener = recorder;
+            myTargets = targets;
+            List<Uri> extraSchemes = new List<Uri>();
+            foreach (Uri target in myTargets)
+            {
+                Uri uri = null;
+                if (target.ToString().StartsWith("http://"))
+                {
+                    uri = new Uri(target.ToString().Replace("http://", "https://"));
+                }
+                if (target.ToString().StartsWith("https://"))
+                {
+                    uri = new Uri(target.ToString().Replace("https://", "http://"));
+                }
+                if(uri != null)
+                    extraSchemes.Add(uri);
+            }
+            myTargets.AddRange(extraSchemes);
+        }
+
+        public bool ShouldPursue(Link link)
+        {
+            foreach(Uri target in myTargets){
+                if (target.IsBaseOf(link.Uri))
+                    return true;
+            }
+            return false;
         }
 
         public int Compare(NodeContent nodeContent, string current)

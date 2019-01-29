@@ -10,11 +10,11 @@ namespace Hyperippe.Workers
     {
         private Baseline myBaseline;
         private Pruner myPruner;
-        private ICrawlListener myCrawlListener;
+        private ICrawlRecorder myCrawlListener;
         private WebClient webClient;
         private string userAgent { get => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";  }
 
-        public Spider(Baseline baseline, Pruner pruner, ICrawlListener crawlerReport)
+        public Spider(Baseline baseline, Pruner pruner, ICrawlRecorder crawlerReport)
         {
             myPruner = pruner;
             myCrawlListener = crawlerReport ?? throw new ArgumentNullException(nameof(crawlerReport));
@@ -32,10 +32,13 @@ namespace Hyperippe.Workers
                 myCrawlListener.NodeCreated(nodeContent);
                 foreach(Link link in nodeContent.Node.Links)
                 {
-                    Node node = new Node(link.Uri.ToString());
-                    if(!myBaseline.ContainsKey(node.Key) && !extraNodes.ContainsKey(node.Key))
+                    if (myPruner.ShouldPursue(link))
                     {
-                        extraNodes.Add(node.Key, node);
+                        Node node = new Node(link.Uri.ToString());
+                        if (!myBaseline.ContainsKey(node.Key) && !extraNodes.ContainsKey(node.Key))
+                        {
+                            extraNodes.Add(node.Key, node);
+                        }
                     }
                 }
             }
@@ -68,10 +71,13 @@ namespace Hyperippe.Workers
                         nodeContent.Node.Links = newLinks;
                         foreach (Link link in nodeContent.Node.Links)
                         {
-                            Node node = new Node(link.Uri.ToString());
-                            if (!myBaseline.ContainsKey(node.Key) && !newNodes.ContainsKey(node.Key))
+                            if (myPruner.ShouldPursue(link))
                             {
-                                newNodes.Add(node.Key, node);
+                                Node node = new Node(link.Uri.ToString());
+                                if (!myBaseline.ContainsKey(node.Key) && !newNodes.ContainsKey(node.Key))
+                                {
+                                    newNodes.Add(node.Key, node);
+                                }
                             }
                         }
                     }

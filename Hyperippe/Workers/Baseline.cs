@@ -33,7 +33,7 @@ namespace Hyperippe.Workers
             store = new Dictionary<string, NodeContent>();
         }
 
-        public Baseline(List<string> uriList)
+        public Baseline(List<Uri> uriList)
         {
             store = new Dictionary<string, NodeContent>();
 
@@ -122,6 +122,18 @@ namespace Hyperippe.Workers
         IEnumerator IEnumerable.GetEnumerator()
         {
             return store.GetEnumerator();
+        }
+
+        public static List<Uri> ToUriList(string[] uriStrings)
+        {
+            List<Uri> uris = new List<Uri>();
+
+            for(int i = 0; i < uriStrings.Length; i++)
+            {
+                uris.Add(new Uri(uriStrings[i]));
+            }
+
+            return uris;
         }
     }
 }

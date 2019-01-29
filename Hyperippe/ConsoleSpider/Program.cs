@@ -10,10 +10,11 @@ namespace Hyperippe.ConsoleSpider
         static void Main(string[] args)
         {
             Console.WriteLine("Starting...");
-            Baseline baseline = new Baseline(new List<string>(args));
+            List<Uri> targets = Baseline.ToUriList(args);
+            Baseline baseline = new Baseline(targets);
             Console.WriteLine("Baseline contain(s) " + baseline.Count.ToString() + " node(s)");
-            ConsoleCrawlListener listener = new ConsoleCrawlListener();
-            Spider spider = new Spider(baseline, new Pruner(listener), listener);
+            ConsoleCrawlRecorder listener = new ConsoleCrawlRecorder();
+            Spider spider = new Spider(baseline, new Pruner(targets, listener), listener);
             Console.WriteLine("Spider initialized.");
 
             do

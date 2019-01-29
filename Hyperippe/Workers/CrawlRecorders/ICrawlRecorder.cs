@@ -5,7 +5,7 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
-    public interface ICrawlListener
+    public interface ICrawlRecorder
     {
         void NodeCreated(NodeContent nodeContent);
         void ChangeDetected(NodeContent oldNodeContent, string newContent);
