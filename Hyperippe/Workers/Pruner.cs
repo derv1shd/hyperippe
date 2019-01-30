@@ -10,13 +10,11 @@ namespace Hyperippe.Workers
     {
         private ICrawlRecorder myCrawlListener;
         private List<Uri> myTargets;
-        private Regex anchors;
-        private Regex hrefs;
+        private Regex anchorsRegex;
 
         public Pruner(List<Uri> targets, ICrawlRecorder recorder)
         {
-            anchors = new Regex("(?i)<a([^>]+)>(.+?)</a>");
-            hrefs = new Regex("\\s*(?i)href\\s*=\\s*(\"([^\"]*\")|'[^']*'|([^'\">\\s]+))");
+            anchorsRegex = new Regex("(?i)<a([^>]+)>(.+?)</a>");
             myCrawlListener = recorder;
             myTargets = targets;
             List<Uri> extraSchemes = new List<Uri>();
@@ -68,41 +66,45 @@ namespace Hyperippe.Workers
 
             try
             {
-                foreach (Match anchor in anchors.Matches(nodeContent.Content))
+                foreach (Match anchor in anchorsRegex.Matches(nodeContent.Content))
                 {
-                    foreach (Match href in hrefs.Matches(anchor.ToString()))
+                    string url = anchor.Value;
+                    // TODO: this should be done not only with double quotes
+                    if (!url.Contains("href=\""))
+                        continue;
+                    url = url.Substring(url.IndexOf("href=\"") + 6);
+                    if (url.Contains("\""))
+                        url = url.Substring(0, url.IndexOf("\""));
+                    Uri uri = null;
+                    try
                     {
-                        string url = href.ToString();
-                        url = url.Substring(url.IndexOf('"') + 1);
-                        url = url.Substring(0, url.LastIndexOf('"'));
-                        Uri uri = null;
+                        uri = new Uri(url);
+                    }
+                    catch (UriFormatException)
+                    {
+                        // Try to construct a full url, in case what we have is a relative url
+                        url = nodeContent.Node.Uri.ToString() + "/" + url;
+                        // Remove excess slashes
+                        url = url.Replace("///", "/");
+                        while (url.Substring(url.IndexOf("://")+3).Contains("//"))
+                        {
+                            url = url.Substring(0, url.IndexOf("://") + 3) + url.Substring(url.IndexOf("://") + 3).Replace("//", "/");
+                        }
                         try
                         {
                             uri = new Uri(url);
                         }
-                        catch (UriFormatException)
+                        catch (Exception)
                         {
-                            // Try to construct a full url, in case what we hace is a relative url
-                            url = nodeContent.Node.Uri.ToString() + "/" + url;
-                            // Remove excess slashes
-                            url = url.Replace("///", "/");
-                            url = url.Replace("//", "/");
-                            try
-                            {
-                                uri = new Uri(url);
-                            }
-                            catch (Exception)
-                            {
-                                continue;
-                            }
+                            continue;
                         }
-                        catch (Exception ex)
-                        {
-                            myCrawlListener.ExceptionRaised(this, ex);
-                        }
-                        if (uri != null)
-                            results.Add(new Link(uri));
                     }
+                    catch (Exception ex)
+                    {
+                        myCrawlListener.ExceptionRaised(this, ex);
+                    }
+                    if (uri != null)
+                        results.Add(new Link(uri));
                 }
             }
             catch(Exception ex)

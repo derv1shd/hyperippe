@@ -11,6 +11,7 @@ namespace Hyperippe.Workers
         private Baseline myBaseline;
         private Pruner myPruner;
         private ICrawlRecorder myCrawlListener;
+        private long sessionId;
         private WebClient webClient;
         private string userAgent { get => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";  }
 
@@ -18,6 +19,8 @@ namespace Hyperippe.Workers
         {
             myPruner = pruner;
             myCrawlListener = crawlerReport ?? throw new ArgumentNullException(nameof(crawlerReport));
+            sessionId = myCrawlListener.CrawlSessionBegin();
+            int beatId = myCrawlListener.CrawlBeatBegin(sessionId);
 
             myBaseline = baseline ?? throw new ArgumentNullException(nameof(baseline));
             webClient = new WebClient();
@@ -29,7 +32,7 @@ namespace Hyperippe.Workers
                 string current = ReadUri(nodeContent.Node.Uri);
                 nodeContent.Update(current);
                 nodeContent.Node.Links = myPruner.EvalLinks(nodeContent);
-                myCrawlListener.NodeCreated(nodeContent);
+                myCrawlListener.NodeRegistered(beatId, nodeContent);
                 foreach(Link link in nodeContent.Node.Links)
                 {
                     if (myPruner.ShouldPursue(link))
@@ -42,17 +45,19 @@ namespace Hyperippe.Workers
                     }
                 }
             }
-            myCrawlListener.LogMessage("Adding " + extraNodes.Count.ToString() + " node(s) from first evaluation of links");
+            myCrawlListener.MessageLogged("Adding " + extraNodes.Count.ToString() + " node(s) from first evaluation of links");
             foreach(var extra in extraNodes)
             {
                 NodeContent extraNodeContent = new NodeContent(extra.Value, string.Empty);
                 myBaseline.Add(extraNodeContent.Node.Key, extraNodeContent);
-                myCrawlListener.NodeCreated(extraNodeContent);
+                myCrawlListener.NodeRegistered(beatId, extraNodeContent);
             }
+            myCrawlListener.CrawlBeatEnd(beatId);
         }
 
         public bool Crawl()
         {
+            int beatId = myCrawlListener.CrawlBeatBegin(sessionId);
             Dictionary<string, Node> newNodes = new Dictionary<string, Node>();
 
             foreach (var valuePair in myBaseline)
@@ -62,12 +67,20 @@ namespace Hyperippe.Workers
 
                 if(myPruner.Compare(nodeContent, current) != 0)
                 {
-                    myCrawlListener.ChangeDetected(nodeContent, current);
+                    if (nodeContent.Content.Length > 0)
+                    {
+                        //Only notify a change if previous content wasn't zero
+                        myCrawlListener.NodeChangeDetected(beatId, nodeContent, current);
+                    }
                     nodeContent.Update(current);
                     List<Link> newLinks = myPruner.EvalLinks(nodeContent);
                     if (myPruner.Compare(nodeContent, newLinks) != 0)
                     {
-                        myCrawlListener.LinkChangeDetected(nodeContent, newLinks);
+                        if (nodeContent.Node.Links.Count > 0)
+                        {
+                            //Only notify a change if previous links weren't empty
+                            myCrawlListener.NodeLinkChangeDetected(beatId, nodeContent, newLinks);
+                        }
                         nodeContent.Node.Links = newLinks;
                         foreach (Link link in nodeContent.Node.Links)
                         {
@@ -83,14 +96,15 @@ namespace Hyperippe.Workers
                     }
                 }
             }
-            myCrawlListener.LogMessage("Adding " + newNodes.Count.ToString() + " node(s) from crawl evaluation of links");
+            myCrawlListener.MessageLogged("Adding " + newNodes.Count.ToString() + " node(s) from crawl evaluation of links");
             foreach (var node in newNodes)
             {
                 NodeContent newNodeContent = new NodeContent(node.Value, string.Empty);
                 myBaseline.Add(newNodeContent.Node.Key, newNodeContent);
-                myCrawlListener.NodeCreated(newNodeContent);
+                myCrawlListener.NodeRegistered(beatId, newNodeContent);
             }
 
+            myCrawlListener.CrawlBeatEnd(beatId);
             return true;
         }
 
@@ -126,6 +140,12 @@ namespace Hyperippe.Workers
                     data.Close();
             }
             return s;
+        }
+
+        public void Stop()
+        {
+            // TODO: other shutdown & clean up tasks.
+            myCrawlListener.CrawlSessionEnd(sessionId);
         }
     }
 }

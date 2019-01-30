@@ -7,7 +7,21 @@ namespace Hyperippe.Workers
 {
     public class NullCrawlRecorder : ICrawlRecorder
     {
-        void ICrawlRecorder.ChangeDetected(NodeContent oldNodeContent, string newContent)
+        private long sessionId;
+        private int beatId = 0;
+
+        long ICrawlRecorder.CrawlSessionBegin()
+        {
+            sessionId = DateTime.Now.ToBinary();
+            return sessionId;
+        }
+
+        int ICrawlRecorder.CrawlBeatBegin(long sessionId)
+        {
+            return ++beatId;
+        }
+
+        void ICrawlRecorder.NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent)
         {
             return;
         }
@@ -17,17 +31,27 @@ namespace Hyperippe.Workers
             return;
         }
 
-        void ICrawlRecorder.LinkChangeDetected(NodeContent oldNodeContent, List<Link> newLinks)
+        void ICrawlRecorder.NodeLinkChangeDetected(int beatId, NodeContent oldNodeContent, List<Link> newLinks)
         {
             return;
         }
 
-        void ICrawlRecorder.LogMessage(string text)
+        void ICrawlRecorder.MessageLogged(string text)
         {
             return;
         }
 
-        void ICrawlRecorder.NodeCreated(NodeContent nodeContent)
+        void ICrawlRecorder.NodeRegistered(int beatId, NodeContent nodeContent)
+        {
+            return;
+        }
+
+        void ICrawlRecorder.CrawlBeatEnd(int beatId)
+        {
+            return;
+        }
+
+        void ICrawlRecorder.CrawlSessionEnd(long sessionId)
         {
             return;
         }

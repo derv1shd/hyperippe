@@ -27,21 +27,28 @@ namespace Hyperippe.Workers
     public class Baseline : IDictionary<string, NodeContent>
     {
         private Dictionary<string, NodeContent> store;
+        private int capacity;
 
-        public Baseline()
+        public Baseline(int maxCapacity)
         {
             store = new Dictionary<string, NodeContent>();
+            capacity = maxCapacity;
         }
 
-        public Baseline(List<Uri> uriList)
+        public Baseline(List<Uri> uriList, int maxCapacity)
         {
             store = new Dictionary<string, NodeContent>();
+            capacity = maxCapacity;
 
-            foreach (var item in uriList)
+            if (uriList.Count <= capacity)
             {
-                Node node = new Node(item);
-                store.Add(node.Key, new NodeContent(node, string.Empty));
+                foreach (var item in uriList)
+                {
+                    Node node = new Node(item);
+                    store.Add(node.Key, new NodeContent(node, string.Empty));
+                }
             }
+            else { throw new InsufficientMemoryException(); }
         }
 
         public NodeContent this[string key] { get => store[key]; set => throw new InvalidOperationException(); }
@@ -56,12 +63,20 @@ namespace Hyperippe.Workers
 
         public void Add(Node node, string content)
         {
-            store.Add(node.Key, new NodeContent(node, content));
+            if (store.Count < capacity)
+            {
+                store.Add(node.Key, new NodeContent(node, content));
+            }
+            else { throw new OutOfMemoryException(); }
         }
 
         public void Add(string key, NodeContent value)
         {
-            store.Add(key, value);
+            if (store.Count < capacity)
+            {
+                store.Add(key, value);
+            }
+            else { throw new OutOfMemoryException(); }
         }
 
         public void Add(KeyValuePair<string, NodeContent> item)

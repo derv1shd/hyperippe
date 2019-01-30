@@ -5,6 +5,7 @@ namespace Hyperippe.GraphModel
 {
     public class Node
     {
+        #region Currently used properties/methods/variables
         public Node(string uriString)
         {
             Uri = new Uri(uriString ?? throw new ArgumentNullException(nameof(uriString)));
@@ -17,10 +18,14 @@ namespace Hyperippe.GraphModel
             Links = new List<Link>();
         }
 
-        public string Name { get { return Uri.ToString(); } }
         public string Key { get { return Uri.ToString(); } }
         public Uri Uri { get; }
-        public string MimeType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public List<Link> Links;
+        #endregion
+
+        #region Future properties/methods/variables thought of but not used or implemented
+        public string Name { get { return Uri.ToString(); } }
+        public string MimeType { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        #endregion
     }
 }
