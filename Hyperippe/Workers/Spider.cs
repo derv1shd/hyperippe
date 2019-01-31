@@ -12,7 +12,6 @@ namespace Hyperippe.Workers
         private Pruner myPruner;
         private ICrawlRecorder myCrawlListener;
         private long sessionId;
-        private WebClient webClient;
         private string userAgent { get => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";  }
 
         public Spider(Baseline baseline, Pruner pruner, ICrawlRecorder crawlerReport)
@@ -23,22 +22,22 @@ namespace Hyperippe.Workers
             int beatId = myCrawlListener.CrawlBeatBegin(sessionId);
 
             myBaseline = baseline ?? throw new ArgumentNullException(nameof(baseline));
-            webClient = new WebClient();
 
             Dictionary<string, Node> extraNodes = new Dictionary<string, Node>();
             foreach (var valuePair in myBaseline)
             {
                 NodeContent nodeContent = valuePair.Value;
-                string current = ReadUri(nodeContent.Node.Uri);
+                HttpStatusCode status;
+                string current = ReadUri(nodeContent.Node.Uri, out status);
                 nodeContent.Update(current);
                 nodeContent.Node.Links = myPruner.EvalLinks(nodeContent);
-                myCrawlListener.NodeRegistered(beatId, nodeContent);
+                myCrawlListener.NodeRegistered(beatId, nodeContent, ((int)status).ToString());
                 foreach(Link link in nodeContent.Node.Links)
                 {
-                    if (myPruner.ShouldPursue(link))
+                    Node node = new Node(link.Uri.ToString());
+                    if (!myBaseline.ContainsKey(node.Key) && !extraNodes.ContainsKey(node.Key))
                     {
-                        Node node = new Node(link.Uri.ToString());
-                        if (!myBaseline.ContainsKey(node.Key) && !extraNodes.ContainsKey(node.Key))
+                        if (myPruner.ShouldPursue(node.Uri))
                         {
                             extraNodes.Add(node.Key, node);
                         }
@@ -50,7 +49,7 @@ namespace Hyperippe.Workers
             {
                 NodeContent extraNodeContent = new NodeContent(extra.Value, string.Empty);
                 myBaseline.Add(extraNodeContent.Node.Key, extraNodeContent);
-                myCrawlListener.NodeRegistered(beatId, extraNodeContent);
+                myCrawlListener.NodeRegistered(beatId, extraNodeContent, ((int)HttpStatusCode.NoContent).ToString());
             }
             myCrawlListener.CrawlBeatEnd(beatId);
         }
@@ -63,14 +62,19 @@ namespace Hyperippe.Workers
             foreach (var valuePair in myBaseline)
             {
                 NodeContent nodeContent = valuePair.Value;
-                string current = ReadUri(nodeContent.Node.Uri);
+                HttpStatusCode status;
+                string current = ReadUri(nodeContent.Node.Uri, out status);
 
-                if(myPruner.Compare(nodeContent, current) != 0)
+                if(status != HttpStatusCode.OK)
+                {
+                    myCrawlListener.NodeStatusReported(beatId, nodeContent, ((int)status).ToString());
+                }
+                else if(myPruner.Compare(nodeContent, current) != 0)
                 {
                     if (nodeContent.Content.Length > 0)
                     {
                         //Only notify a change if previous content wasn't zero
-                        myCrawlListener.NodeChangeDetected(beatId, nodeContent, current);
+                        myCrawlListener.NodeChangeDetected(beatId, nodeContent, current, ((int)status).ToString());
                     }
                     nodeContent.Update(current);
                     List<Link> newLinks = myPruner.EvalLinks(nodeContent);
@@ -84,10 +88,10 @@ namespace Hyperippe.Workers
                         nodeContent.Node.Links = newLinks;
                         foreach (Link link in nodeContent.Node.Links)
                         {
-                            if (myPruner.ShouldPursue(link))
+                            Node node = new Node(link.Uri.ToString());
+                            if (!myBaseline.ContainsKey(node.Key) && !newNodes.ContainsKey(node.Key))
                             {
-                                Node node = new Node(link.Uri.ToString());
-                                if (!myBaseline.ContainsKey(node.Key) && !newNodes.ContainsKey(node.Key))
+                                if (myPruner.ShouldPursue(node.Uri))
                                 {
                                     newNodes.Add(node.Key, node);
                                 }
@@ -101,36 +105,50 @@ namespace Hyperippe.Workers
             {
                 NodeContent newNodeContent = new NodeContent(node.Value, string.Empty);
                 myBaseline.Add(newNodeContent.Node.Key, newNodeContent);
-                myCrawlListener.NodeRegistered(beatId, newNodeContent);
+                myCrawlListener.NodeRegistered(beatId, newNodeContent, ((int)HttpStatusCode.NoContent).ToString());
             }
 
             myCrawlListener.CrawlBeatEnd(beatId);
             return true;
         }
 
-        private string ReadUri(Uri uri)
+        private string ReadUri(Uri uri, out HttpStatusCode status)
         {
             Stream data = null;
             StreamReader reader = null;
             string s = string.Empty;
+            status = HttpStatusCode.NoContent;
 
-            webClient.Headers.Add("user-agent", userAgent);
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(uri);
+            request.Headers.Add("user-agent", userAgent);
 
             try
             {
-                data = webClient.OpenRead(uri);
-                try
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                status = response.StatusCode;
+                if (status == HttpStatusCode.OK)
                 {
-                    reader = new StreamReader(data);
-                    s = reader.ReadToEnd();
-                }
-                finally
-                {
-                    if(reader != null)
-                        reader.Close();
+                    data = response.GetResponseStream();
+                    try
+                    {
+                        reader = new StreamReader(data);
+                        s = reader.ReadToEnd();
+                    }
+                    finally
+                    {
+                        if (reader != null)
+                            reader.Close();
+                    }
                 }
             }
-            catch(Exception ex)
+            catch (WebException ex)
+            {
+                var errorResponse = ex.Response as HttpWebResponse;
+                if (errorResponse != null)
+                    status = errorResponse.StatusCode;
+                myCrawlListener.ExceptionRaised(this, ex);
+            }
+            catch (Exception ex)
             {
                 myCrawlListener.ExceptionRaised(this, ex);
             }

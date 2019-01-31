@@ -11,12 +11,16 @@ namespace Hyperippe.Workers
         private ICrawlRecorder myCrawlListener;
         private List<Uri> myTargets;
         private Regex anchorsRegex;
+        private List<Uri> additionalTargets;
+        private int additionalTargetsAvailable;
 
-        public Pruner(List<Uri> targets, ICrawlRecorder recorder)
+        public Pruner(List<Uri> targets, ICrawlRecorder recorder, int additionalTargetCount)
         {
             anchorsRegex = new Regex("(?i)<a([^>]+)>(.+?)</a>");
             myCrawlListener = recorder;
             myTargets = targets;
+            additionalTargets = new List<Uri>();
+            additionalTargetsAvailable = additionalTargetCount;
             List<Uri> extraSchemes = new List<Uri>();
             foreach (Uri target in myTargets)
             {
@@ -35,11 +39,40 @@ namespace Hyperippe.Workers
             myTargets.AddRange(extraSchemes);
         }
 
+        public bool ShouldPursue(Uri uri)
+        {
+            foreach (Uri target in myTargets)
+            {
+                if (target == uri || target.IsBaseOf(uri))
+                {
+                    if (additionalTargetsAvailable > 0)
+                    {
+                        additionalTargetsAvailable--;
+                        additionalTargets.Add(uri);
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+            }
+            return false;
+        }
+
         public bool ShouldPursue(Link link)
         {
-            foreach(Uri target in myTargets){
+            foreach (Uri target in myTargets)
+            {
                 if (target.IsBaseOf(link.Uri))
-                    return true;
+                {
+                    if (additionalTargetsAvailable > 0)
+                    {
+                        additionalTargetsAvailable--;
+                        additionalTargets.Add(link.Uri);
+                        return true;
+                    }
+                    else
+                        return false;
+                }
             }
             return false;
         }
@@ -75,6 +108,8 @@ namespace Hyperippe.Workers
                     url = url.Substring(url.IndexOf("href=\"") + 6);
                     if (url.Contains("\""))
                         url = url.Substring(0, url.IndexOf("\""));
+                    if (url.Contains("#"))
+                        url = url.Substring(0, url.IndexOf("#"));
                     Uri uri = null;
                     try
                     {

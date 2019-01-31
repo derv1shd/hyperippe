@@ -8,9 +8,12 @@ namespace Hyperippe.Workers
     public interface ICrawlRecorder
     {
         long CrawlSessionBegin();
+        void CrawlSessionBegin(long sessionId);
         int CrawlBeatBegin(long sessionId);
-        void NodeRegistered(int beatId, NodeContent nodeContent);
-        void NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent);
+        void CrawlBeatBegin(int beatIdd);
+        void NodeRegistered(int beatId, NodeContent nodeContent, string status);
+        void NodeStatusReported(int beatId, NodeContent nodeContent, string status);
+        void NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string status);
         void NodeLinkChangeDetected(int beatId, NodeContent oldNodeContent, List<Link> newLinks);
         void ExceptionRaised(object caller, Exception ex);
         void MessageLogged(string text);
