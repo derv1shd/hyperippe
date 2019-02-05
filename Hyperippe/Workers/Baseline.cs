@@ -6,24 +6,6 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
-    public class NodeContent
-    {
-        public Node Node { get; }
-        private string content;
-        public string Content { get => content; }
-
-        public NodeContent(Node node, string newContent)
-        {
-            Node = node ?? throw new ArgumentNullException(nameof(node));
-            content = newContent ?? throw new ArgumentNullException(nameof(newContent));
-        }
-
-        public void Update(string newContent)
-        {
-            content = newContent;
-        }
-    }
-
     public class Baseline : IDictionary<string, NodeContent>
     {
         private Dictionary<string, NodeContent> store;
@@ -45,7 +27,7 @@ namespace Hyperippe.Workers
                 foreach (var item in uriList)
                 {
                     Node node = new Node(item);
-                    store.Add(node.Key, new NodeContent(node, string.Empty));
+                    store.Add(node.Key, new NodeContent(node));
                 }
             }
             else { throw new InsufficientMemoryException(); }
@@ -61,11 +43,11 @@ namespace Hyperippe.Workers
 
         public bool IsReadOnly => false;
 
-        public void Add(Node node, string content)
+        public void Add(Node node, string content, string contentType, long contentLength)
         {
             if (store.Count < capacity)
             {
-                store.Add(node.Key, new NodeContent(node, content));
+                store.Add(node.Key, new NodeContent(node, content, contentType, contentLength));
             }
             else { throw new OutOfMemoryException(); }
         }
@@ -109,14 +91,14 @@ namespace Hyperippe.Workers
             return store.GetEnumerator();
         }
 
-        public void Update(string key, string newContent)
+        public void Update(string key, string newContent, string contentType, long contentLength)
         {
-            store[key].Update(newContent);
+            store[key].Update(newContent, contentType, contentLength);
         }
 
         public void Update(KeyValuePair<string, NodeContent> item)
         {
-            store[item.Key].Update(item.Value.Content);
+            store[item.Key].Update(item.Value.Content, item.Value.ContentType, item.Value.ContentLength);
         }
 
         public bool Remove(string key)

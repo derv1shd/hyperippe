@@ -87,7 +87,7 @@ namespace Hyperippe.Workers
 
         public int Compare(NodeContent nodeContent, List<Link> currentLinks)
         {
-            if (nodeContent.Node.Links.Count != currentLinks.Count)
+            if (nodeContent.Links.Count != currentLinks.Count)
                 return -1;
             else
                 return 0;
@@ -96,6 +96,8 @@ namespace Hyperippe.Workers
         public List<Link> EvalLinks(NodeContent nodeContent)
         {
             List<Link> results = new List<Link>();
+
+            if (!nodeContent.ContentType.StartsWith("text/html")) return results;
 
             try
             {

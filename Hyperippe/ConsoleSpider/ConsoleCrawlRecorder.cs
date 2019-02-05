@@ -39,7 +39,7 @@ namespace Hyperippe.ConsoleSpider
 
         void ICrawlRecorder.NodeRegistered(int beatId, NodeContent nodeContent, string status)
         {
-            Console.WriteLine("Created node for " + nodeContent.Node.Name + " URL: " + nodeContent.Node.Uri.ToString() + " (" + status + "), link(s): " + nodeContent.Node.Links.Count.ToString());
+            Console.WriteLine("Created node for " + nodeContent.Node.Name + " URL: " + nodeContent.Node.Uri.ToString() + " (" + status + ": " + nodeContent.ContentType + "), link(s): " + nodeContent.Links.Count.ToString());
         }
 
         void ICrawlRecorder.NodeStatusReported(int beatId, NodeContent nodeContent, string status)
@@ -47,14 +47,14 @@ namespace Hyperippe.ConsoleSpider
             Console.WriteLine("Status " + status + " for node " + nodeContent.Node.Name + " URL: " + nodeContent.Node.Uri.ToString());
         }
 
-        void ICrawlRecorder.NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string status)
+        void ICrawlRecorder.NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string newContentType, long newContentLength, string status)
         {
-            Console.WriteLine("Change detected on " + oldNodeContent.Node.Name + " (" + status + "), old length: " + oldNodeContent.Content.Length.ToString() + ", new length: " + newContent.Length.ToString());
+            Console.WriteLine("Change detected on " + oldNodeContent.Node.Name + " (" + status + ": " + newContentType + "), old length: " + oldNodeContent.ContentLength + ", new length: " + newContentLength);
         }
 
         void ICrawlRecorder.NodeLinkChangeDetected(int beatId, NodeContent oldNodeContent, List<Link> newLinks)
         {
-            Console.WriteLine("Link change detected on " + oldNodeContent.Node.Name + ", previous link number: " + oldNodeContent.Node.Links.Count.ToString() + ", link number: " + newLinks.Count.ToString());
+            Console.WriteLine("Link change detected on " + oldNodeContent.Node.Name + ", previous link number: " + oldNodeContent.Links.Count.ToString() + ", link number: " + newLinks.Count.ToString());
         }
 
         void ICrawlRecorder.ExceptionRaised(object caller, Exception ex)

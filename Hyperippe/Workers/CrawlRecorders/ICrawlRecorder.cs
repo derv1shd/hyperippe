@@ -13,7 +13,7 @@ namespace Hyperippe.Workers
         void CrawlBeatBegin(int beatIdd);
         void NodeRegistered(int beatId, NodeContent nodeContent, string status);
         void NodeStatusReported(int beatId, NodeContent nodeContent, string status);
-        void NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string status);
+        void NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string newContentType, long newContentLength, string status);
         void NodeLinkChangeDetected(int beatId, NodeContent oldNodeContent, List<Link> newLinks);
         void ExceptionRaised(object caller, Exception ex);
         void MessageLogged(string text);

@@ -5,97 +5,93 @@ using System.Text;
 
 namespace Hyperippe.GraphModel
 {
-    public class NodeState
-    {
-        public Node Node { get; }
-        public string Status { get; }
-        public bool ContentChanged { get; }
-        public bool LinksChanged { get; }
-
-        public NodeState(Node node, string status, bool contentChanged, bool linksChanged)
-        {
-            Node = node ?? throw new ArgumentNullException(nameof(node));
-            Status = status ?? throw new ArgumentNullException(nameof(status));
-        }
-    }
-
     public class Beat:IList<NodeState>
     {
         public long SessionId { get; }
         public int Id { get; }
+
         private List<NodeState> states = new List<NodeState>();
         private bool closed = false;
-
-        int ICollection<NodeState>.Count => states.Count;
-
-        bool ICollection<NodeState>.IsReadOnly => !closed;
-
-        NodeState IList<NodeState>.this[int index] { get => states[index]; set => throw new NotImplementedException(); }
 
         public Beat(long sessionId, int beatId)
         {
             SessionId = sessionId;
             Id = beatId;
         }
+        public int Count => ((IList<NodeState>)states).Count;
 
-        int IList<NodeState>.IndexOf(NodeState item)
+        public bool IsReadOnly => ((IList<NodeState>)states).IsReadOnly;
+
+        public NodeState this[int index] { get => ((IList<NodeState>)states)[index]; set => ((IList<NodeState>)states)[index] = value; }
+
+        public int IndexOf(NodeState item)
         {
-            return states.IndexOf(item);
+            return ((IList<NodeState>)states).IndexOf(item);
         }
 
-        void IList<NodeState>.Insert(int index, NodeState item)
+        public int IndexOf(Node item)
         {
-            if(closed) throw new InvalidOperationException();
-
-            states.Insert(index, item);
+            foreach (NodeState i in states)
+            {
+                if (i.Node.Equals(item))
+                    return IndexOf(i);
+            }
+            return -1;
         }
 
-        void IList<NodeState>.RemoveAt(int index)
+        public void Insert(int index, NodeState item)
         {
-            if (closed) throw new InvalidOperationException();
-
-            states.RemoveAt(index);
+            ((IList<NodeState>)states).Insert(index, item);
         }
 
-        void ICollection<NodeState>.Add(NodeState item)
+        public void RemoveAt(int index)
         {
-            if (closed) throw new InvalidOperationException();
-
-            states.Add(item);
+            ((IList<NodeState>)states).RemoveAt(index);
         }
 
-        void ICollection<NodeState>.Clear()
+        public void Add(NodeState item)
         {
-            if (closed) throw new InvalidOperationException();
-
-            states.Clear();
+            ((IList<NodeState>)states).Add(item);
         }
 
-        bool ICollection<NodeState>.Contains(NodeState item)
+        public void Clear()
         {
-            return states.Contains(item);
+            ((IList<NodeState>)states).Clear();
         }
 
-        void ICollection<NodeState>.CopyTo(NodeState[] array, int arrayIndex)
+        public bool Contains(NodeState item)
         {
-            throw new NotImplementedException();
+            return ((IList<NodeState>)states).Contains(item);
         }
 
-        bool ICollection<NodeState>.Remove(NodeState item)
+        public bool Contains(Node item)
         {
-            if (closed) throw new InvalidOperationException();
-
-            return states.Remove(item);
+            foreach (NodeState i in states)
+            {
+                if (i.Node.Equals(item))
+                    return true;
+            }
+            return false;
         }
 
-        IEnumerator<NodeState> IEnumerable<NodeState>.GetEnumerator()
+        public void CopyTo(NodeState[] array, int arrayIndex)
         {
-            return states.GetEnumerator();
+            ((IList<NodeState>)states).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(NodeState item)
+        {
+            return ((IList<NodeState>)states).Remove(item);
+        }
+
+        public IEnumerator<NodeState> GetEnumerator()
+        {
+            return ((IList<NodeState>)states).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return states.GetEnumerator();
+            return ((IList<NodeState>)states).GetEnumerator();
         }
     }
 }

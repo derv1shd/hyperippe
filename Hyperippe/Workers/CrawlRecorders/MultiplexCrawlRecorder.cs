@@ -8,7 +8,7 @@ namespace Hyperippe.Workers
     public class MultiplexCrawlRecorder : ICrawlRecorder
     {
         protected long sessionId;
-        protected int beatId = 0;
+        protected int beatId = -1;
         protected List<ICrawlRecorder> recorders;
 
         public MultiplexCrawlRecorder(List<ICrawlRecorder> crawlRecorders)
@@ -18,6 +18,7 @@ namespace Hyperippe.Workers
 
         public MultiplexCrawlRecorder(ICrawlRecorder[] crawlRecorders)
         {
+            recorders = new List<ICrawlRecorder>();
             foreach(var rec in crawlRecorders)
             {
                 recorders.Add(rec);
@@ -74,15 +75,15 @@ namespace Hyperippe.Workers
         {
             foreach (var recorder in recorders)
             {
-                recorder.NodeRegistered(beatId, nodeContent, status);
+                recorder.NodeStatusReported(beatId, nodeContent, status);
             }
         }
 
-        void ICrawlRecorder.NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string status)
+        void ICrawlRecorder.NodeChangeDetected(int beatId, NodeContent oldNodeContent, string newContent, string newContentType, long newContentLength, string status)
         {
             foreach (var recorder in recorders)
             {
-                recorder.NodeChangeDetected(beatId, oldNodeContent, newContent, status);
+                recorder.NodeChangeDetected(beatId, oldNodeContent, newContent, newContentType, newContentLength, status);
             }
         }
 

@@ -10,9 +10,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Workers", "Workers\Workers.
 		{2BE2EFC7-F6AB-4B25-9761-938B69047124} = {2BE2EFC7-F6AB-4B25-9761-938B69047124}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphModel", "GraphModel\GraphModel.csproj", "{2BE2EFC7-F6AB-4B25-9761-938B69047124}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetworkGraphModel", "GraphModel\NetworkGraphModel.csproj", "{2BE2EFC7-F6AB-4B25-9761-938B69047124}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleSpider", "ConsoleSpider\ConsoleSpider.csproj", "{5400E0C9-C6E4-427E-A9DA-88F538862842}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleSpider", "ConsoleSpider\ConsoleSpider.csproj", "{5400E0C9-C6E4-427E-A9DA-88F538862842}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

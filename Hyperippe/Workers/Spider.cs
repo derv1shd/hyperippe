@@ -27,12 +27,11 @@ namespace Hyperippe.Workers
             foreach (var valuePair in myBaseline)
             {
                 NodeContent nodeContent = valuePair.Value;
-                HttpStatusCode status;
-                string current = ReadUri(nodeContent.Node.Uri, out status);
-                nodeContent.Update(current);
-                nodeContent.Node.Links = myPruner.EvalLinks(nodeContent);
+                string current = ReadUri(nodeContent.Node.Uri, out HttpStatusCode status, out string contentType, out long contentLength);
+                nodeContent.Update(current, contentType, contentLength);
+                nodeContent.Links = myPruner.EvalLinks(nodeContent);
                 myCrawlListener.NodeRegistered(beatId, nodeContent, ((int)status).ToString());
-                foreach(Link link in nodeContent.Node.Links)
+                foreach(Link link in nodeContent.Links)
                 {
                     Node node = new Node(link.Uri.ToString());
                     if (!myBaseline.ContainsKey(node.Key) && !extraNodes.ContainsKey(node.Key))
@@ -47,7 +46,7 @@ namespace Hyperippe.Workers
             myCrawlListener.MessageLogged("Adding " + extraNodes.Count.ToString() + " node(s) from first evaluation of links");
             foreach(var extra in extraNodes)
             {
-                NodeContent extraNodeContent = new NodeContent(extra.Value, string.Empty);
+                NodeContent extraNodeContent = new NodeContent(extra.Value);
                 myBaseline.Add(extraNodeContent.Node.Key, extraNodeContent);
                 myCrawlListener.NodeRegistered(beatId, extraNodeContent, ((int)HttpStatusCode.NoContent).ToString());
             }
@@ -62,31 +61,28 @@ namespace Hyperippe.Workers
             foreach (var valuePair in myBaseline)
             {
                 NodeContent nodeContent = valuePair.Value;
-                HttpStatusCode status;
-                string current = ReadUri(nodeContent.Node.Uri, out status);
 
-                if(status != HttpStatusCode.OK)
-                {
-                    myCrawlListener.NodeStatusReported(beatId, nodeContent, ((int)status).ToString());
-                }
-                else if(myPruner.Compare(nodeContent, current) != 0)
+                string current = ReadUri(nodeContent.Node.Uri, out HttpStatusCode status, out string contentType, out long contentLength);
+
+                myCrawlListener.NodeStatusReported(beatId, nodeContent, ((int)status).ToString());
+                if(myPruner.Compare(nodeContent, current) != 0)
                 {
                     if (nodeContent.Content.Length > 0)
                     {
                         //Only notify a change if previous content wasn't zero
-                        myCrawlListener.NodeChangeDetected(beatId, nodeContent, current, ((int)status).ToString());
+                        myCrawlListener.NodeChangeDetected(beatId, nodeContent, current, contentType, contentLength, ((int)status).ToString());
                     }
-                    nodeContent.Update(current);
+                    nodeContent.Update(current, contentType, contentLength);
                     List<Link> newLinks = myPruner.EvalLinks(nodeContent);
                     if (myPruner.Compare(nodeContent, newLinks) != 0)
                     {
-                        if (nodeContent.Node.Links.Count > 0)
+                        if (nodeContent.Links.Count > 0)
                         {
                             //Only notify a change if previous links weren't empty
                             myCrawlListener.NodeLinkChangeDetected(beatId, nodeContent, newLinks);
                         }
-                        nodeContent.Node.Links = newLinks;
-                        foreach (Link link in nodeContent.Node.Links)
+                        nodeContent.Links = newLinks;
+                        foreach (Link link in nodeContent.Links)
                         {
                             Node node = new Node(link.Uri.ToString());
                             if (!myBaseline.ContainsKey(node.Key) && !newNodes.ContainsKey(node.Key))
@@ -103,7 +99,7 @@ namespace Hyperippe.Workers
             myCrawlListener.MessageLogged("Adding " + newNodes.Count.ToString() + " node(s) from crawl evaluation of links");
             foreach (var node in newNodes)
             {
-                NodeContent newNodeContent = new NodeContent(node.Value, string.Empty);
+                NodeContent newNodeContent = new NodeContent(node.Value);
                 myBaseline.Add(newNodeContent.Node.Key, newNodeContent);
                 myCrawlListener.NodeRegistered(beatId, newNodeContent, ((int)HttpStatusCode.NoContent).ToString());
             }
@@ -112,12 +108,14 @@ namespace Hyperippe.Workers
             return true;
         }
 
-        private string ReadUri(Uri uri, out HttpStatusCode status)
+        private string ReadUri(Uri uri, out HttpStatusCode status, out string contentType, out long contentLength)
         {
             Stream data = null;
             StreamReader reader = null;
             string s = string.Empty;
             status = HttpStatusCode.NoContent;
+            contentType = string.Empty;
+            contentLength = 0;
 
             HttpWebRequest request = (HttpWebRequest) WebRequest.Create(uri);
             request.Headers.Add("user-agent", userAgent);
@@ -126,18 +124,24 @@ namespace Hyperippe.Workers
             {
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 status = response.StatusCode;
+                contentType = response.ContentType;
+                contentLength = response.ContentLength;
+
                 if (status == HttpStatusCode.OK)
                 {
-                    data = response.GetResponseStream();
-                    try
+                    if (contentType.StartsWith("text"))
                     {
-                        reader = new StreamReader(data);
-                        s = reader.ReadToEnd();
-                    }
-                    finally
-                    {
-                        if (reader != null)
-                            reader.Close();
+                        data = response.GetResponseStream();
+                        try
+                        {
+                            reader = new StreamReader(data);
+                            s = reader.ReadToEnd();
+                        }
+                        finally
+                        {
+                            if (reader != null)
+                                reader.Close();
+                        }
                     }
                 }
             }

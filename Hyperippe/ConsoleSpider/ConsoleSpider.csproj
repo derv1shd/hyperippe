@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GraphModel\GraphModel.csproj" />
+    <ProjectReference Include="..\GraphModel\NetworkGraphModel.csproj" />
     <ProjectReference Include="..\Workers\Workers.csproj" />
   </ItemGroup>
 
