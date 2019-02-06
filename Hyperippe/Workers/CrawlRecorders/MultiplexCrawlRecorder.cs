@@ -5,6 +5,14 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The MultiplexCrawlRecorder is a standard ICrawlRecorder implementation to allow for several recorders
+    /// to be used. Its constructor has a list of recorders, and this class replicates the calls that it
+    /// receives to those recorders. A typical usage scenario would be to instance a BeatCrawlRecorder, and other
+    /// implementations of recorders that i.e. print changes to the screen of reports them in some visualization,
+    /// and all these are passed to a MultiplexCrawlRecorder to make sure all changes are received by all
+    /// ICrawlRecorder implementations.
+    /// </summary>
     public class MultiplexCrawlRecorder : ICrawlRecorder
     {
         protected long sessionId;

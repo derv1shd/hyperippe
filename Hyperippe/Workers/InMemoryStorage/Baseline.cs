@@ -6,6 +6,12 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The Baseline is an in memory storage containing the current state of the monitored nodes.
+    /// It can also can be, and it's actually, used as a list of nodes to crawl. Its constructor
+    /// needs a maximun capacity as a parameter, so as to stop it from growing without bounds.
+    /// After this max capacity is reached, trying to add nodes will raise an exception.
+    /// </summary>
     public class Baseline : IDictionary<string, NodeContent>
     {
         private Dictionary<string, NodeContent> store;

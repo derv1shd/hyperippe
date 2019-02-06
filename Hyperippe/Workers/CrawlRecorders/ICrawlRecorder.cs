@@ -5,6 +5,11 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The ICrawlRecorder interface is called by the Spider as it crawls nodes. Each method is used to
+    /// report a specific change, along with some parameters with details about it. This is used for
+    /// dependency injection.
+    /// </summary>
     public interface ICrawlRecorder
     {
         long CrawlSessionBegin();

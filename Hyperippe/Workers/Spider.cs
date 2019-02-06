@@ -6,6 +6,13 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The Spider class uses and maintains a Baseline as a list of nodes to check.
+    /// Its constructor receives the initial baseline, a Pruner to be able to decide what to do,
+    /// and a ICrawlReporter implementation to call whenever changes or statuses are detected.
+    /// An external caller, after instantiation, is supposed to call Crawl() periodically, and Stop()
+    /// at shutdown.
+    /// </summary>
     public class Spider
     {
         private Baseline myBaseline;

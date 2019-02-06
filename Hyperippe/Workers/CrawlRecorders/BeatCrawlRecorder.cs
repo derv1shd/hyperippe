@@ -5,6 +5,10 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The BeatCrawlRecorder class is a standard ICrawlRecorder implementation that stores
+    /// changes is a Beatline-derived class.
+    /// </summary>
     public class BeatCrawlRecorder : Hyperippe.Workers.ICrawlRecorder
     {
         protected long sessionId;

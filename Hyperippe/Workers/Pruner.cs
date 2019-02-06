@@ -6,6 +6,11 @@ using Hyperippe.GraphModel;
 
 namespace Hyperippe.Workers
 {
+    /// <summary>
+    /// The Pruner class is tasked with deciding if a particular node, link or content is of interest.
+    /// It contains method to compare nodes, evaluate the content of a node (i.e. HTML anchors), and decide
+    /// if a link should be pursued. It is called by the Spider class whenever one of these conditions arise.
+    /// </summary>
     public class Pruner
     {
         private ICrawlRecorder myCrawlListener;
