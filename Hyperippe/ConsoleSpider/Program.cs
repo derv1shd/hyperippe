@@ -16,7 +16,7 @@ namespace Hyperippe.ConsoleSpider
             Console.WriteLine("Baseline contain(s) " + baseline.Count.ToString() + " node(s)");
             ConsoleCrawlRecorder consoleListener = new ConsoleCrawlRecorder();
             BeatCrawlRecorder recorder = new BeatCrawlRecorder(beatline);
-            MultiplexCrawlRecorder listener = new MultiplexCrawlRecorder(new ICrawlRecorder[] { consoleListener, recorder});
+            MultiplexCrawlRecorder listener = new MultiplexCrawlRecorder(new ICrawlRecorder[] { consoleListener, recorder });
             Spider spider = new Spider(baseline, new Pruner(targets, listener, 10), listener);
             Console.WriteLine("Spider initialized.");
 
@@ -31,6 +31,7 @@ namespace Hyperippe.ConsoleSpider
                 System.Threading.Thread.Sleep(5000);
             } while (!Console.KeyAvailable);
 
+            spider.Stop();
             Console.WriteLine("End.");
         }
     }
