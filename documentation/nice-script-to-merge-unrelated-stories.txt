@@ -1,0 +1,4 @@
+ git checkout unrelated.branch
+ git merge --strategy=recursive --strategy-option=theirs --no-ff -m "Reverse merge to unify stories" --allow-unrelated-histories master
+ git checkout master
+ git merge -m "Unified stories from unrelated branch" unrelated.branch
